@@ -1,18 +1,15 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.sedlakr.webtestrunnerjetbrainsplugin</id>
-    <name>web-test-runner-jetbrains-plugin</name>
+    <name>PEON Web Test Runner</name>
     <vendor>sedlakr</vendor>
 
     <depends>com.intellij.modules.platform</depends>
-
-    <resource-bundle>messages.MyBundle</resource-bundle>
+    <depends>JavaScript</depends>
+    <depends>NodeJS</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <toolWindow factoryClass="com.github.sedlakr.webtestrunnerjetbrainsplugin.toolWindow.MyToolWindowFactory" id="MyToolWindow"/>
+        <codeInsight.lineMarkerProvider language="JavaScript" implementationClass="com.github.sedlakr.webtestrunnerjetbrainsplugin.MyLineMarkerProvider"/>
     </extensions>
 
-    <applicationListeners>
-        <listener class="com.github.sedlakr.webtestrunnerjetbrainsplugin.listeners.MyApplicationActivationListener" topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-    </applicationListeners>
 </idea-plugin>
