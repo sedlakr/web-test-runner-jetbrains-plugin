@@ -2,7 +2,6 @@ package com.github.sedlakr.webtestrunnerjetbrainsplugin
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.lineMarker.RunLineMarkerProvider
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
@@ -16,16 +15,12 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.execution.ParametersListUtil
 import java.io.File
 import java.nio.charset.Charset
-import java.nio.file.FileSystem
-import javax.swing.SwingUtilities
 
 
 open class MyLineMarkerProvider : RunLineMarkerProvider() {
@@ -44,7 +39,7 @@ open class MyLineMarkerProvider : RunLineMarkerProvider() {
                     psiElement.textRange,
                     runIcon,
                     { _: PsiElement? ->
-                        "Run WTR test $testName"
+                        "Run WTR test \"$testName\""
                     },
                     { _, _ ->
                         runCommand(psiElement, testName,testedVirtualFile)
@@ -69,13 +64,28 @@ open class MyLineMarkerProvider : RunLineMarkerProvider() {
         val dataContext = SimpleDataContext.getProjectContext(project)
         val commandDataContext =
             RunAnythingCommandCustomizer.customizeContext(dataContext);
-        val commandString = "node --no-warnings peonRunner.js test --runTestsByPath=${testFile.path} --verbose --testNamePattern=\"${testNameFull}\""
+        val commandString =
+            "node --no-warnings peonRunner.js test --runTestsByPath=${testFile.path} --testNamePattern=\"${testNameFull}\""
         val initialCommandLine = GeneralCommandLine(ParametersListUtil.parse(commandString, false, true))
-            .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM)
+            .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
             .withWorkDirectory(workDirectory.path)
         val executor = DefaultRunExecutor.getRunExecutorInstance()
         val commandLine =
             RunAnythingCommandCustomizer.customizeCommandLine(commandDataContext, workDirectory, initialCommandLine)
+        useNodeJsInterpreterInCommandLine(project, commandLine)
+        commandLine.charset = Charset.forName("UTF-8")
+        val profile = RunProfile(commandLine, commandString, testNameFull,)
+        ExecutionEnvironmentBuilder.create(project, executor, profile)
+            .dataContext(commandDataContext)
+            .buildAndExecute()
+
+        thisLogger().info("Done")
+    }
+
+    private fun useNodeJsInterpreterInCommandLine(
+        project: Project,
+        commandLine: GeneralCommandLine
+    ) {
         // use configured nodejs interpreter
         val nodeJsInterpreter = NodeJsInterpreterManager.getInstance(project).interpreter
         if (nodeJsInterpreter != null) {
@@ -84,20 +94,6 @@ open class MyLineMarkerProvider : RunLineMarkerProvider() {
             val nodeBinDir = nodePath.substring(0, nodePath.lastIndexOfAny(charArrayOf('/', '\\')))
             commandLine.environment["PATH"] = nodeBinDir + File.pathSeparator + effectiveEnvironment["PATH"]
         }
-        val generalCommandLine =
-            if (Registry.`is`("run.anything.use.pty", false)) PtyCommandLine(commandLine) else commandLine
-        generalCommandLine.charset = Charset.forName("UTF-8")
-        val profile = RunProfile(generalCommandLine, commandString)
-        ExecutionEnvironmentBuilder.create(project, executor, profile)
-            .dataContext(commandDataContext)
-            .buildAndExecute()
-//        SwingUtilities.invokeLater {
-//            thisLogger().info("Invoking cmd")
-//            environment.runner.execute(environment)
-//            thisLogger().info("After invoking cmd")
-//        }
-
-        thisLogger().info("Done")
     }
 
     fun getWorkingDir(project: Project, testedVirtualFile: VirtualFile): VirtualFile {
@@ -137,7 +133,7 @@ open class MyLineMarkerProvider : RunLineMarkerProvider() {
         var testname = ""
         while (processed.parent !== null) {
             if (processed is JSCallExpression) {
-                testname = escapeVitestTestName(processed) + " " + testname
+                testname = if(testname === "") escapeVitestTestName(processed) else escapeVitestTestName(processed) + " " + testname
             }
             processed = processed.parent
         }
@@ -163,7 +159,6 @@ open class MyLineMarkerProvider : RunLineMarkerProvider() {
         // check if file wtr.config.mjs exists
         val config = File(wd.path).resolve("wtr.config.mjs")
 
-        println(config.path)
         return config.exists();
     }
 
