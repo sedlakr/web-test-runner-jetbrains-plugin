@@ -22,6 +22,8 @@ import com.intellij.util.execution.ParametersListUtil
 import java.io.File
 import java.nio.charset.Charset
 
+const val TEST_TYPE_IT = "it"
+const val TEST_TYPE_DESCRIBE = "describe"
 
 open class MyLineMarkerProvider : RunLineMarkerProvider() {
 
@@ -31,18 +33,21 @@ open class MyLineMarkerProvider : RunLineMarkerProvider() {
             return null
         }
         if (psiElement is LeafPsiElement) {
+            var testType = TEST_TYPE_IT
+            if (isDescribe(psiElement)) {
+                testType = TEST_TYPE_DESCRIBE
+            }
             if (isWTrtest(psiElement)) {
-
                 val testName = traverseTestNameFUll(psiElement);
                 return LineMarkerInfo(
                     psiElement,
                     psiElement.textRange,
                     runIcon,
                     { _: PsiElement? ->
-                        "Run WTR test \"$testName\""
+                        "Run WTR test ($testType) \"$testName\""
                     },
                     { _, _ ->
-                        runCommand(psiElement, testName,testedVirtualFile)
+                        runCommand(psiElement, testName, testType, testedVirtualFile)
 
                     },
                     GutterIconRenderer.Alignment.CENTER,
@@ -55,17 +60,21 @@ open class MyLineMarkerProvider : RunLineMarkerProvider() {
         return null
     }
 
-    private fun runCommand(psiElement: PsiElement, testNameFull: String, testFile: VirtualFile) {
+    private fun runCommand(psiElement: PsiElement, testNameFull: String, testType: String, testFile: VirtualFile) {
         thisLogger().info("run test $testNameFull")
         // execute node peon.js
         val project = psiElement.project
         val workDirectory = getWorkingDir(project, psiElement.containingFile.virtualFile);
         thisLogger().info("Working directory: $workDirectory")
+        var testNameSuffix = ""
+        if (testType == TEST_TYPE_IT) {
+            testNameSuffix = "$"
+        }
         val dataContext = SimpleDataContext.getProjectContext(project)
         val commandDataContext =
             RunAnythingCommandCustomizer.customizeContext(dataContext);
         val commandString =
-            "node --no-warnings peonRunner.js test --runTestsByPath=${testFile.path} --testNamePattern=\"${testNameFull}\""
+            "node --no-warnings peonRunner.js test --runTestsByPath=${testFile.path} --testNamePattern=\"^${testNameFull}${testNameSuffix}\""
         val initialCommandLine = GeneralCommandLine(ParametersListUtil.parse(commandString, false, true))
             .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
             .withWorkDirectory(workDirectory.path)
@@ -74,7 +83,7 @@ open class MyLineMarkerProvider : RunLineMarkerProvider() {
             RunAnythingCommandCustomizer.customizeCommandLine(commandDataContext, workDirectory, initialCommandLine)
         useNodeJsInterpreterInCommandLine(project, commandLine)
         commandLine.charset = Charset.forName("UTF-8")
-        val profile = RunProfile(commandLine, commandString, testNameFull,)
+        val profile = RunProfile(commandLine, commandString, testNameFull)
         ExecutionEnvironmentBuilder.create(project, executor, profile)
             .dataContext(commandDataContext)
             .buildAndExecute()
@@ -111,11 +120,17 @@ open class MyLineMarkerProvider : RunLineMarkerProvider() {
 
     fun isWTrtest(leaf: LeafPsiElement): Boolean {
         if (leaf.parent is JSReferenceExpression && listOf(
-                "test",
                 "it",
                 "describe"
-            ).contains(leaf.text.split(".")[0])
+            ).contains(leaf.text)
         ) {
+            return true
+        }
+        return false
+    }
+
+    fun isDescribe(leaf: LeafPsiElement): Boolean {
+        if (leaf.parent is JSReferenceExpression && leaf.text == "describe") {
             return true
         }
         return false
@@ -133,7 +148,8 @@ open class MyLineMarkerProvider : RunLineMarkerProvider() {
         var testname = ""
         while (processed.parent !== null) {
             if (processed is JSCallExpression) {
-                testname = if(testname === "") escapeVitestTestName(processed) else escapeVitestTestName(processed) + " " + testname
+                testname =
+                    if (testname === "") escapeVitestTestName(processed) else escapeVitestTestName(processed) + " " + testname
             }
             processed = processed.parent
         }
