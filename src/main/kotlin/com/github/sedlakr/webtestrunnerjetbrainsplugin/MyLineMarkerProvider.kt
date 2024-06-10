@@ -74,7 +74,7 @@ open class MyLineMarkerProvider : RunLineMarkerProvider() {
         val commandDataContext =
             RunAnythingCommandCustomizer.customizeContext(dataContext);
         val commandString =
-            "node --no-warnings peonRunner.js test --runTestsByPath=${testFile.path} --testNamePattern=\"^${testNameFull}${testNameSuffix}\""
+            "node --no-warnings peonRunner.js test --runTestsByPath=\"${testFile.path}\" --testNamePattern=\"^${testNameFull}${testNameSuffix}\""
         val initialCommandLine = GeneralCommandLine(ParametersListUtil.parse(commandString, false, true))
             .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
             .withWorkDirectory(workDirectory.path)
