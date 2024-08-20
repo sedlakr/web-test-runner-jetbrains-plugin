@@ -5,6 +5,10 @@
 ## [Unreleased]
 
 ## 2.0.0
+
+### Upgraded
+- gradle 8.6 -> 8.9
+
 ### Changed
 - support latest IntelliJ version 2024.2.0.1, migrate from gradle plugin 1.x to 2.x
 - filled changelog
