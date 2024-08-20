@@ -12,7 +12,24 @@ plugins {
     alias(libs.plugins.qodana) // Gradle Qodana Plugin
     alias(libs.plugins.kover) // Gradle Kover Plugin
 }
+// Configure UI tests plugin
+// Read more: https://github.com/JetBrains/intellij-ui-test-robot
+val runIdeForUiTests by intellijPlatformTesting.runIde.registering {
+    task {
+        jvmArgumentProviders += CommandLineArgumentProvider {
+            listOf(
+                "-Drobot-server.port=8082",
+                "-Dide.mac.message.dialogs.as.sheets=false",
+                "-Djb.privacy.policy.text=<!--999.999-->",
+                "-Djb.consents.confirmation.enabled=false",
+            )
+        }
+    }
 
+    plugins {
+        robotServerPlugin()
+    }
+}
 group = properties("pluginGroup").get()
 version = properties("pluginVersion").get()
 
@@ -23,22 +40,30 @@ repositories {
 
 // Dependencies are managed with Gradle version catalog - read more: https://docs.gradle.org/current/userguide/platforms.html#sub:version-catalog
 dependencies {
-//    implementation(libs.annotations)
+    intellijPlatform {
+        create(properties("platformType"), properties("platformVersion"))
+//        plugins(properties("platformPlugins").map { it.split(',').map(String::trim).filter(String::isNotEmpty) })
+        bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
+        instrumentationTools()
+    }
 }
 
 // Set the JVM language level used to build the project.
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
+}
+repositories {
+    mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 // Configure Gradle IntelliJ Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
-intellij {
-    pluginName = properties("pluginName")
-    version = properties("platformVersion")
-    type = properties("platformType")
-
-    // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file.
-    plugins = properties("platformPlugins").map { it.split(',').map(String::trim).filter(String::isNotEmpty) }
+intellijPlatform {
+    pluginConfiguration {
+        name = properties("pluginName")
+    }
 }
 
 // Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
@@ -91,15 +116,6 @@ tasks {
                 )
             }
         }
-    }
-
-    // Configure UI tests plugin
-    // Read more: https://github.com/JetBrains/intellij-ui-test-robot
-    runIdeForUiTests {
-        systemProperty("robot-server.port", "8082")
-        systemProperty("ide.mac.message.dialogs.as.sheets", "false")
-        systemProperty("jb.privacy.policy.text", "<!--999.999-->")
-        systemProperty("jb.consents.confirmation.enabled", "false")
     }
 
     signPlugin {

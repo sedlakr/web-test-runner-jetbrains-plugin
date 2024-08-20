@@ -3,5 +3,6 @@
 # web-test-runner-jetbrains-plugin Changelog
 
 ## [Unreleased]
-### Added
-- Initial scaffold created from [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)
+### Changed
+- support latest IntelliJ version 2024.2.0.1, migrate from gradle plugin 1.x to 2.x
+- filled changelog
