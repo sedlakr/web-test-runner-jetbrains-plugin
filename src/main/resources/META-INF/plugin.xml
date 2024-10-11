@@ -9,7 +9,8 @@
     <depends>NodeJS</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <codeInsight.lineMarkerProvider language="JavaScript" implementationClass="com.github.sedlakr.webtestrunnerjetbrainsplugin.MyLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="JavaScript" implementationClass="com.github.sedlakr.webtestrunnerjetbrainsplugin.RunOnceTestMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="JavaScript" implementationClass="com.github.sedlakr.webtestrunnerjetbrainsplugin.RunDebugTestMarkerProvider"/>
     </extensions>
 
 </idea-plugin>

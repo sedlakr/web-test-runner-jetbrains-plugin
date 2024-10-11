@@ -2,6 +2,7 @@ package com.github.sedlakr.webtestrunnerjetbrainsplugin
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.lineMarker.RunLineMarkerProvider
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
@@ -25,7 +26,7 @@ import java.nio.charset.Charset
 const val TEST_TYPE_IT = "it"
 const val TEST_TYPE_DESCRIBE = "describe"
 
-open class MyLineMarkerProvider : RunLineMarkerProvider() {
+open class RunOnceTestMarkerProvider : RunLineMarkerProvider() {
 
     override fun getLineMarkerInfo(psiElement: PsiElement): LineMarkerInfo<*>? {
         val testedVirtualFile = psiElement.containingFile.virtualFile
@@ -42,9 +43,9 @@ open class MyLineMarkerProvider : RunLineMarkerProvider() {
                 return LineMarkerInfo(
                     psiElement,
                     psiElement.textRange,
-                    runIcon,
+                    getLineMarkerInfoIcon(),
                     { _: PsiElement? ->
-                        "Run WTR test ($testType) \"$testName\""
+                        getTestLabel(testType, testName)
                     },
                     { _, _ ->
                         runCommand(psiElement, testName, testType, testedVirtualFile)
@@ -58,6 +59,17 @@ open class MyLineMarkerProvider : RunLineMarkerProvider() {
             }
         }
         return null
+    }
+    open fun getTestLabel(testType: String, testName:String) : String {
+        return "Run " + (if (testType == TEST_TYPE_IT) "test" else "test suite") + " \"$testName\""
+    }
+
+    open fun getLineMarkerInfoIcon(): javax.swing.Icon {
+        return runIcon
+    }
+
+    open fun commandAppend(): String {
+        return ""
     }
 
     private fun runCommand(psiElement: PsiElement, testNameFull: String, testType: String, testFile: VirtualFile) {
@@ -73,22 +85,30 @@ open class MyLineMarkerProvider : RunLineMarkerProvider() {
         val dataContext = SimpleDataContext.getProjectContext(project)
         val commandDataContext =
             RunAnythingCommandCustomizer.customizeContext(dataContext);
-        val commandString =
+        var commandString =
             "node --no-warnings peonRunner.js test --runTestsByPath=\"${testFile.path}\" --testNamePattern=\"^${testNameFull}${testNameSuffix}\""
-        val initialCommandLine = GeneralCommandLine(ParametersListUtil.parse(commandString, false, true))
-            .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
+        if (commandAppend() != "") {
+            commandString += " " + commandAppend();
+        }
+        val initialCommandLine = PtyCommandLine(ParametersListUtil.parse(commandString, false, true))
+            .withInitialColumns(1024)
+            .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM)
             .withWorkDirectory(workDirectory.path)
         val executor = DefaultRunExecutor.getRunExecutorInstance()
         val commandLine =
             RunAnythingCommandCustomizer.customizeCommandLine(commandDataContext, workDirectory, initialCommandLine)
         useNodeJsInterpreterInCommandLine(project, commandLine)
         commandLine.charset = Charset.forName("UTF-8")
-        val profile = RunProfile(commandLine, commandString, testNameFull)
+        val profile = getProfile(commandLine, commandString, testNameFull);
         ExecutionEnvironmentBuilder.create(project, executor, profile)
             .dataContext(commandDataContext)
             .buildAndExecute()
 
         thisLogger().info("Done")
+    }
+
+    open fun getProfile(commandLine: GeneralCommandLine, commandString: String, testNameFull: String): RunProfile {
+        return RunProfile(commandLine, commandString, testNameFull)
     }
 
     private fun useNodeJsInterpreterInCommandLine(
@@ -158,6 +178,9 @@ open class MyLineMarkerProvider : RunLineMarkerProvider() {
 
     fun escapeVitestTestName(jsCallExpression: JSCallExpression): String {
         val arguments = jsCallExpression.arguments
+        if (arguments.isEmpty()) {
+            return ""
+        }
         var commandName = arguments[0].text
         if (commandName[0] == commandName[commandName.length - 1]) {
             if (arrayListOf('\'', '"', '`').contains(commandName[0])) {
