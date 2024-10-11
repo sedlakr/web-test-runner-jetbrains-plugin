@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added
+- possibility to run test or debug tests with opened browser, devtools and watch mode
+
 ## 2.0.0
 
 ### Upgraded
