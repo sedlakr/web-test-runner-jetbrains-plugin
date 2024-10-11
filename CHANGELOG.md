@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## 2.1.0
+
 ### Added
 - possibility to run test or debug tests with opened browser, devtools and watch mode
 
