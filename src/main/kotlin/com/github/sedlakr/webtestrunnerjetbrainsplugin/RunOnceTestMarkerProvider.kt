@@ -127,6 +127,13 @@ open class RunOnceTestMarkerProvider : RunLineMarkerProvider() {
 
     fun getWorkingDir(project: Project, testedVirtualFile: VirtualFile): VirtualFile {
         var wd = project.guessProjectDir()!!
+
+        // Check if "project.js" exists in the guessed working directory
+        val projectJs = wd.findChild("project.js")
+        if (projectJs != null) {
+            return wd
+        }
+
         val packageJson = PackageJsonUtil.findUpPackageJson(testedVirtualFile)
         if (packageJson != null) {
             val packageJsonDir = packageJson.parent

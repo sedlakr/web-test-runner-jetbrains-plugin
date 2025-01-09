@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- fixed resolving of working directory when package.json is in module folder
+
 ## 2.2.0
 
 ### Bumped
