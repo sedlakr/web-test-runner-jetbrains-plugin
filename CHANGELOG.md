@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## 2.3.0
+
 ### Fixed
 - fixed resolving of working directory when package.json is in module folder
 
