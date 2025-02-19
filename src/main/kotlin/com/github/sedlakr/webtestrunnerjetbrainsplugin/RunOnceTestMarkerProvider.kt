@@ -26,11 +26,12 @@ import java.nio.charset.Charset
 const val TEST_TYPE_IT = "it"
 const val TEST_TYPE_DESCRIBE = "describe"
 
-open class RunOnceTestMarkerProvider : RunLineMarkerProvider() {
+open class RunOnceTestMarkerProvider() : RunLineMarkerProvider() {
 
     override fun getLineMarkerInfo(psiElement: PsiElement): LineMarkerInfo<*>? {
         val testedVirtualFile = psiElement.containingFile.virtualFile
-        if (!supportsWtr(psiElement.project, testedVirtualFile)) {
+        val (isSupported, isWithWtrPluginRunner) = wtrInfo(psiElement.project, testedVirtualFile)
+        if (!isSupported) {
             return null
         }
         if (psiElement is LeafPsiElement) {
@@ -48,7 +49,7 @@ open class RunOnceTestMarkerProvider : RunLineMarkerProvider() {
                         getTestLabel(testType, testName)
                     },
                     { _, _ ->
-                        runCommand(psiElement, testName, testType, testedVirtualFile)
+                        runCommand(psiElement, testName, testType, testedVirtualFile, isWithWtrPluginRunner)
 
                     },
                     GutterIconRenderer.Alignment.CENTER,
@@ -60,7 +61,8 @@ open class RunOnceTestMarkerProvider : RunLineMarkerProvider() {
         }
         return null
     }
-    open fun getTestLabel(testType: String, testName:String) : String {
+
+    open fun getTestLabel(testType: String, testName: String): String {
         return "Run " + (if (testType == TEST_TYPE_IT) "test" else "test suite") + " \"$testName\""
     }
 
@@ -72,7 +74,13 @@ open class RunOnceTestMarkerProvider : RunLineMarkerProvider() {
         return ""
     }
 
-    private fun runCommand(psiElement: PsiElement, testNameFull: String, testType: String, testFile: VirtualFile) {
+    private fun runCommand(
+        psiElement: PsiElement,
+        testNameFull: String,
+        testType: String,
+        testFile: VirtualFile,
+        isWithWtrPluginRunner: Boolean
+    ) {
         thisLogger().info("run test $testNameFull")
         // execute node peon.js
         val project = psiElement.project
@@ -85,8 +93,14 @@ open class RunOnceTestMarkerProvider : RunLineMarkerProvider() {
         val dataContext = SimpleDataContext.getProjectContext(project)
         val commandDataContext =
             RunAnythingCommandCustomizer.customizeContext(dataContext);
-        var commandString =
-            "node --no-warnings peonRunner.js test --runTestsByPath=\"${testFile.path}\" --testNamePattern=\"^${testNameFull}${testNameSuffix}\""
+
+        var commandString = "node --no-warnings wtr.plugin.runner.js"
+        if (!isWithWtrPluginRunner) {
+            // old way with peonRunner
+            commandString = "node --no-warnings peonRunner.js test"
+        };
+
+        commandString += " --runTestsByPath=\"${testFile.path}\" --testNamePattern=\"^${testNameFull}${testNameSuffix}\""
         if (commandAppend() != "") {
             commandString += " " + commandAppend();
         }
@@ -133,8 +147,12 @@ open class RunOnceTestMarkerProvider : RunLineMarkerProvider() {
         if (projectJs != null) {
             return wd
         }
+        var packageJson = wd.findChild("package.json")
+        if (packageJson != null) {
+            return wd
+        }
 
-        val packageJson = PackageJsonUtil.findUpPackageJson(testedVirtualFile)
+        packageJson = PackageJsonUtil.findUpPackageJson(testedVirtualFile)
         if (packageJson != null) {
             val packageJsonDir = packageJson.parent
             if (packageJsonDir != wd) {
@@ -200,12 +218,21 @@ open class RunOnceTestMarkerProvider : RunLineMarkerProvider() {
             .replace("(", "\\(")
     }
 
-    fun supportsWtr(project: Project, testedVirtualFile: VirtualFile): Boolean {
+    fun wtrInfo(project: Project, testedVirtualFile: VirtualFile): Pair<Boolean, Boolean> {
         val wd = getWorkingDir(project, testedVirtualFile)
         // check if file wtr.config.mjs exists
         val config = File(wd.path).resolve("wtr.config.mjs")
 
-        return config.exists();
+        val exists = config.exists()
+        // not exist, not supported
+        if (!exists) {
+            return Pair(false, false);
+        }
+        // supported, decide wtr.plugin.runner.js or fallback to peon
+        val wtrPluginRunner = File(wd.path).resolve("wtr.plugin.runner.js");
+
+        val isWithWtrPluginRunner = wtrPluginRunner.exists();
+        return Pair(true, isWithWtrPluginRunner);
     }
 
 }
