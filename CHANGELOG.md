@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## 2.4.0
+
 ### Added
 - added support for running test in project where wtr.plugin.runner.js is present, plugin will call this file with given arguments to run tests in single file and by pattern like via peonRunner.js
 
