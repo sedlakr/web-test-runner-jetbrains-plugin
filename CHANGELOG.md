@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- correct test name pattern when describe is not in root, but in iife like (function(){}()) 
+
 ## 2.5.0
 
 ### Bumped

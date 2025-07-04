@@ -193,8 +193,15 @@ open class RunOnceTestMarkerProvider() : RunLineMarkerProvider() {
         var testname = ""
         while (processed.parent !== null) {
             if (processed is JSCallExpression) {
+                val escapeProcessedVitestTestName = escapeVitestTestName(processed)
                 testname =
-                    if (testname === "") escapeVitestTestName(processed) else escapeVitestTestName(processed) + " " + testname
+                    if (testname === "") {
+                        escapeProcessedVitestTestName
+                    } else if (escapeProcessedVitestTestName === "") {
+                        testname
+                    } else {
+                        escapeProcessedVitestTestName + " " + testname
+                    }
             }
             processed = processed.parent
         }
