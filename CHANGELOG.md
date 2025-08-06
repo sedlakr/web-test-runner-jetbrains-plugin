@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Bumped
+- compatibility with idea 2025.2
+
 ### 2.6.0
 
 ### Fixed
