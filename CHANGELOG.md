@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Optimized
+- handle WTR support and config resolution only once per project via service (not in every line merger info call), this dramatically improves performance 
+
 ### 2.7.0
 
 ### Bumped
