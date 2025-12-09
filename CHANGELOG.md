@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Bumped
+- compatibility with idea 2025.3
+- other components by dependabot
+
 ## 3.0.0
 
 ### Optimized
