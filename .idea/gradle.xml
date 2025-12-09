@@ -5,6 +5,7 @@
     <option name="linkedExternalProjectsSettings">
       <GradleProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="gradleHome" value="C:\dev\.gradle\gradle-9.2.1" />
         <option name="gradleJvm" value="zulu-21" />
         <option name="modules">
           <set>

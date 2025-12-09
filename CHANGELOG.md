@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## 3.1.0
+
 ### Bumped
 - compatibility with idea 2025.3
 - other components by dependabot
