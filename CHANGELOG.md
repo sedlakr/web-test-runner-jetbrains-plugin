@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## 3.2.0
+
 ### Changed
 - fixed running tests with parentheses (,) in test or describe name
 
