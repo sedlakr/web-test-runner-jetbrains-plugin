@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Changed
+- fixed running tests with parentheses (,) in test or describe name
+
 ## 3.1.0
 
 ### Bumped

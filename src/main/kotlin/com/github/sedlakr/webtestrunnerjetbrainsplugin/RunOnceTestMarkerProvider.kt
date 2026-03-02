@@ -197,8 +197,8 @@ open class RunOnceTestMarkerProvider() : RunLineMarkerProvider() {
         }
         return commandName.replace("\"", "\\\"")
             .replace("`", "\\`")
-            .replace(")", "\\)")
-            .replace("(", "\\(")
+            .replace(")", "\\\\)")
+            .replace("(", "\\\\(")
     }
 
 }
