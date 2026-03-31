@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## 3.3.0
+
 ### Bumped
 - compatibility with IntelliJ IDEA 2026.1
 
