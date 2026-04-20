@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## 4.0.0
+
 ### Added
 - added support for running tests in project that contains subprojects in subfolders
 
