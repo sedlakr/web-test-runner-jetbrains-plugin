@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added
+- added support for running tests in project that contains subprojects in subfolders
+
 ## 3.3.0
 
 ### Bumped

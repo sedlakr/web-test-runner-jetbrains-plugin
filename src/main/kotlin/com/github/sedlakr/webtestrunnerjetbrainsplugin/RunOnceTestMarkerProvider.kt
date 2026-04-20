@@ -29,8 +29,8 @@ open class RunOnceTestMarkerProvider() : RunLineMarkerProvider() {
 
     override fun getLineMarkerInfo(psiElement: PsiElement): LineMarkerInfo<*>? {
         val testedVirtualFile = psiElement.containingFile.virtualFile
-        MyProjectService.getInstance(psiElement.project).wtrInfo(psiElement.project, testedVirtualFile)
-        val (isSupported, isWithWtrPluginRunner) = MyProjectService.getInstance(psiElement.project).wtrSupportedInfo()
+        MyProjectService.getInstance(psiElement.project).wtrInfo(testedVirtualFile)
+        val (isSupported, isWithWtrPluginRunner) = MyProjectService.getInstance(psiElement.project).wtrSupportedInfo(testedVirtualFile)
         if (!isSupported) {
             return null
         }
@@ -84,7 +84,7 @@ open class RunOnceTestMarkerProvider() : RunLineMarkerProvider() {
         thisLogger().info("run test $testNameFull")
         // execute node peon.js
         val project = psiElement.project
-        val workDirectory = MyProjectService.getInstance(psiElement.project).getProjectWorkingDir()
+        val workDirectory = MyProjectService.getInstance(psiElement.project).getProjectWorkingDir(testFile)
         thisLogger().info("Working directory: $workDirectory")
         var testNameSuffix = ""
         if (testType == TEST_TYPE_IT) {
