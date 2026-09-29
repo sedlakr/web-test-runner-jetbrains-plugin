@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- test output in the Run window showed raw ANSI escape codes instead of colours; tests now run on ConPTY and are shown in a terminal console
+
 ## 4.1.0
 
 ### Bumped

@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.lineMarker.RunLineMarkerProvider
+import com.intellij.execution.process.LocalPtyOptions
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer
 import com.intellij.javascript.nodejs.interpreter.NodeJsInterpreterManager
@@ -105,7 +106,14 @@ open class RunOnceTestMarkerProvider() : RunLineMarkerProvider() {
             commandString += " " + commandAppend();
         }
         val initialCommandLine = PtyCommandLine(ParametersListUtil.parse(commandString, false, true))
-            .withInitialColumns(1024)
+            .withOptions(
+                // ConPTY passes VT sequences through; winpty scrapes a console without VT processing, which
+                // draws ESC as a literal arrow and leaves every colour code in the output as text.
+                LocalPtyOptions.defaults().builder()
+                    .initialColumns(1024)
+                    .useWinConPty(true)
+                    .build()
+            )
             .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.SYSTEM)
             .withWorkDirectory(workDirectory.path)
         val executor = DefaultRunExecutor.getRunExecutorInstance()
