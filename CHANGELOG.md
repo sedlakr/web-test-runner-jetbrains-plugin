@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Added
+- file locations in test output (for example `src/foo.ts:102:15`) are links that open the file at that line
+
 ## 4.1.1
 
 ### Fixed

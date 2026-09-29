@@ -49,7 +49,9 @@ open class RunProfile(
             }
 
             override fun createConsole(executor: Executor): ConsoleView {
-                return TerminalExecutionConsole(environment.project, null)
+                val console = TerminalExecutionConsole(environment.project, null)
+                console.addMessageFilter(StackLocationFilter(environment.project, profileCommandLine.workDirectory))
+                return console
             }
         }
     }
