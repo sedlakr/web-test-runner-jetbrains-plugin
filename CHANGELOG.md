@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+## 4.3.0
+
+### Bumped
+- compatibility with IntelliJ IDEA 2026.3
+
 ## 4.2.0
 
 ### Added
